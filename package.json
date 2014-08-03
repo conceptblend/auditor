@@ -1,0 +1,27 @@
+{
+  "name": "auditor",
+  "version": "0.0.1",
+  "description": "A spider that audits site pages and semantic headings and metadata.",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/conceptblend/auditor.git"
+  },
+  "keywords": [
+    "spider",
+    "crawling",
+    "audit",
+    "content",
+    "semantic",
+    "metadata"
+  ],
+  "author": "Andrew J Wright",
+  "license": "Apache v2",
+  "bugs": {
+    "url": "https://github.com/conceptblend/auditor/issues"
+  },
+  "homepage": "https://github.com/conceptblend/auditor",
+  "dependencies": {
+    "spider": "^0.1.0"
+  }
+}
