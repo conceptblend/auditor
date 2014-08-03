@@ -1,4 +1,4 @@
-var spider = require('../main');
+var spider = require('spider');
 
 var container_selector	= "#page",
 	output_separator	= "\t",
