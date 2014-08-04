@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/conceptblend/auditor",
   "dependencies": {
-    "spider": "^0.1.0"
+    "spider": "mikeal/spider"
   }
 }
