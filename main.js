@@ -6,9 +6,10 @@ var output_separator	= "\t",
 	g_startPage			= process.argv[4] || "http://localhost:8888/anchor-test.html",
 	container_selector	= process.argv[5] || "body",
 	pages				= [],
-	intTotalPages		= 0;
+	intTotalPages		= 0,
+	g_maxPages			= process.argv[6] || 1000;
 
-console.log( process.argv );
+//console.log( process.argv );
 
 // ==========================
 //	MemoryCache object
@@ -47,6 +48,15 @@ console.log("Excludes feedback links and non-html files.")
 function jsonify (val) {
 	return JSON.stringify( val !== 'undefined' ? val : '' )
 }
+
+function trimSpaces (str) {
+	return str.replace(/^ /gi, '').replace(/ $/gi, '');
+}
+
+function wordCount (str) {
+	return (str !== "") ? trimSpaces(str).split(' ').length : 0;
+}
+
 process.on('exit', function (){
 	
 	console.log("Total pages: "+intTotalPages);
@@ -86,7 +96,7 @@ spider({
 })
 .route( g_domain, g_scope, function (window, $) {
 	
-	if (this.fromCache) return;
+	if (this.fromCache || (intTotalPages >= g_maxPages)) return;
 	
 	$(container_selector + ' a').filter(function(i){
 		var self = $(this),
@@ -111,15 +121,15 @@ spider({
 	var page = {
 		url						: this.url.href,
 		title					: pageTitle_text,
-		titleWordLength			: (pageTitle_text !== "") ? pageTitle_text.split(' ').length : 0,
+		titleWordLength			: wordCount(pageTitle_text),
 		titleLength				: pageTitle_text.length,
 		description				: description_content,
-		descriptionWordLength	: (description_content !== "") ? description_content.split(' ').length : 0,
+		descriptionWordLength	: wordCount(description_content),
 		descriptionLength		: description_content.length,
 		keywords 				: keywords_content,
-		keywordsCount			: (keywords_content !== "") ? keywords_content.split(',').length : 0,
+		keywordsCount			: wordCount(keywords_content),
 		h1						: h1_text,
-		h1WordLength			: (h1_text !== "") ? h1_text.split(' ').length : 0,
+		h1WordLength			: wordCount(h1_text),
 		h1Length				: h1_text.length
 	};
 	
