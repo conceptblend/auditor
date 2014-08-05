@@ -2,4 +2,4 @@
 /data
 /backups
 /tests
-*.sh
+# /sh

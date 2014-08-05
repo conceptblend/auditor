@@ -3,8 +3,12 @@ var spider = require('spider');
 var output_separator	= "\t",
 	g_domain			= process.argv[2] || "localhost:8888",
 	g_scope				= process.argv[3] || "*",
-	g_startPage			= process.argv[4] || "http://localhost:8888/index.html",
-	container_selector	= process.argv[5] || "body";
+	g_startPage			= process.argv[4] || "http://localhost:8888/anchor-test.html",
+	container_selector	= process.argv[5] || "body",
+	pages				= [],
+	intTotalPages		= 0;
+
+console.log( process.argv );
 
 // ==========================
 //	MemoryCache object
@@ -36,9 +40,45 @@ var cache = new MemoryCache();
 
 console.log("Excludes feedback links and non-html files.")
 
-// Output some column headings
-var headings = ["URL", "Title", "Title Length", "Description", "Description Length", "Keywords", "Keywords Count", "H1", "H1 Length"];
-console.log( headings.join(output_separator));
+// ==========================
+//	Output the results
+// ==========================
+
+function jsonify (val) {
+	return JSON.stringify( val !== 'undefined' ? val : '' )
+}
+process.on('exit', function (){
+	
+	console.log("Total pages: "+intTotalPages);
+
+	// Output some column headings
+	var headings = ["URL", "Title", "Title Word Count", "Title Length", "Description", "Description Word Count", "Description Length", "Keywords", "Keywords Count", "H1", "H1 Word Count", "H1 Length"];
+	console.log( headings.join(output_separator) );
+	
+	pages.forEach(function (page){
+		var csvLine = "";
+		csvLine += jsonify( page.url ) + output_separator;
+		csvLine += jsonify( page.title ) + output_separator;
+		csvLine += jsonify( page.titleWordLength ) + output_separator;
+		csvLine += jsonify( page.titleLength ) + output_separator;
+		csvLine += jsonify( page.description ) + output_separator;
+		csvLine += jsonify( page.descriptionWordLength ) + output_separator;
+		csvLine += jsonify( page.descriptionLength ) + output_separator;
+		csvLine += jsonify( page.keywords ) + output_separator;
+		csvLine += jsonify( page.keywordsCount ) + output_separator;
+		csvLine += jsonify( page.h1 ) + output_separator;
+		csvLine += jsonify( page.h1WordLength ) + output_separator;
+		csvLine += jsonify( page.h1Length );
+		
+		console.log( csvLine );
+	});
+	
+});
+
+// ==========================
+//	Output the results
+// ==========================
+
 
 spider({
 	maxConnections: 12,
@@ -50,55 +90,42 @@ spider({
 	
 	$(container_selector + ' a').filter(function(i){
 		var self = $(this),
-			href = self.prop('href');
+			href = self.attr('href');
 		return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.search(/referrer/gi) == -1);
 		//return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.indexOf("getdoc.aspx") == -1);
 		//return !!href && (href.indexOf('http') == 0);
 	}).spider();
 	
-	//totalPages++;
+	intTotalPages++;
 	var output = [],
 		el_pageTitle = $('head > title'),
 		el_description = $('head > meta[name=description]'),
 		el_keywords = $('head > meta[name=keywords]'),
-		h1 = $('h1'),
-		h1Text = "";
+		h1 = $('h1');
 
-	// URL
-	output.push(this.url.href);
+	var pageTitle_text = !!(el_pageTitle.length > 0) ? $(el_pageTitle).eq(0).text() : "",
+		description_content = !!(el_description.length > 0) ? $(el_description).eq(0).attr('content') : "",
+		keywords_content = !!(el_keywords.length > 0) ? $(el_keywords).eq(0).attr('content') : "",
+		h1_text = !!(h1.length > 0) ? h1.eq(0).text() : "";
 	
-	// Page Title
-	var pageTitle_text = !!el_pageTitle ? $(el_pageTitle).eq(0).text() : ""
-	output.push( pageTitle_text );
+	var page = {
+		url						: this.url.href,
+		title					: pageTitle_text,
+		titleWordLength			: (pageTitle_text !== "") ? pageTitle_text.split(' ').length : 0,
+		titleLength				: pageTitle_text.length,
+		description				: description_content,
+		descriptionWordLength	: (description_content !== "") ? description_content.split(' ').length : 0,
+		descriptionLength		: description_content.length,
+		keywords 				: keywords_content,
+		keywordsCount			: (keywords_content !== "") ? keywords_content.split(',').length : 0,
+		h1						: h1_text,
+		h1WordLength			: (h1_text !== "") ? h1_text.split(' ').length : 0,
+		h1Length				: h1_text.length
+	};
 	
-	// Page Title Length
-	output.push( !!pageTitle_text ? pageTitle_text.length : 0 );
-	
-	// Page Meta Description
-	var description_content = !!el_description ? $(el_description).eq(0).attr('content') : "";
-	output.push( description_content );
-	
-	// Page Meta Description Length
-	output.push( !!description_content ? description_content.length : 0 );
-	
-	// Page Meta Keywords
-	var keywords_content = !!el_keywords ? $(el_keywords).eq(0).attr('content') : "";
-	output.push( keywords_content );
-	
-	// Page Meta Keywords Length
-	output.push( !!keywords_content ? keywords_content.split(',').length : 0 );
-	
-	// H1
-	output.push( !!h1 ? h1.eq(0).text() : "" );
-	
-	// H1 length
-	output.push( !!h1 ? h1.eq(0).text().length : 0 );
-	
-	console.log( output.join(output_separator) );
+	pages.push( page );
 	
 })
 .get( g_startPage )
 .log( 'log' )
 ;
-
-//console.log("Total Pages: "+totalPages);
