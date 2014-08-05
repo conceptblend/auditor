@@ -39,7 +39,7 @@ var cache = new MemoryCache();
 //	/MemoryCache object
 // ==========================
 
-console.log("Excludes feedback links and non-html files.")
+console.log("Excludes non-html files.")
 
 // ==========================
 //	Output the results
