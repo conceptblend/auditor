@@ -5,6 +5,14 @@ A basic web-crawler for auditing websites.
 
 ## Usage
 
+### Parameters:
+
+```
+node main.js "[domain]" "[pattern]" "[seed_page]" "[jQuery_scope_selector:body]" "[max_pages:1000]" "[regex_filter:'']"
+```
+
+### Examples:
+
 To crawl all pages on _mysite.com_ – collecting links within the body – and output the results to _mysite.tsv_:
 
 ```
