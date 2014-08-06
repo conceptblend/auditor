@@ -7,7 +7,8 @@ var output_separator	= "\t",
 	container_selector	= process.argv[5] || "body",
 	pages				= [],
 	intTotalPages		= 0,
-	g_maxPages			= process.argv[6] || 1000;
+	g_maxPages			= process.argv[6] || 1000,
+    g_urlFilterRegEx    = process.argv[7] ? new RegExp(process.argv[7], "gi") : null;
 
 //console.log( process.argv );
 
@@ -15,25 +16,32 @@ var output_separator	= "\t",
 //	MemoryCache object
 // ==========================
 
-function MemoryCache () {
+function myMemoryCache () {
   this.cache = {};
 }
-MemoryCache.prototype.get = function (_url, cb) {
+myMemoryCache.prototype.get = function (_url, cb) {
   var url = _url.toLowerCase();
+    console.log ('cache:get - '+url);
   if (!this.cache[url]) return cb(null);
   cb({headers:this.cache[url].headers, body:this.cache[url].body.toString()});
 }
-MemoryCache.prototype.set = function (_url, headers, body) {
+myMemoryCache.prototype.set = function (_url, headers, body) {
   var url = _url.toLowerCase();
+    console.log ('cache:set - '+url);
   this.cache[url] = {headers:headers, body:new Buffer(body)};
 }
-MemoryCache.prototype.getHeaders = function (_url, cb) {
+myMemoryCache.prototype.getHeaders = function (_url, cb) {
   var url = _url.toLowerCase();
   if (!this.cache[url]) return cb(null);
   cb(this.cache[url].headers);
 }
 
-var cache = new MemoryCache();
+var g_spiderOpts = {
+        maxConnections: 12,
+        cache:          new myMemoryCache(),
+        caseSensitive:  false
+    };
+
 
 // ==========================
 //	/MemoryCache object
@@ -67,7 +75,7 @@ process.on('exit', function (){
 	
 	pages.forEach(function (page){
 		var csvLine = "";
-		csvLine += jsonify( page.url ) + output_separator;
+		csvLine += jsonify( page.url/*.toLowerCase()*/ ) + output_separator;
 		csvLine += jsonify( page.title ) + output_separator;
 		csvLine += jsonify( page.titleWordLength ) + output_separator;
 		csvLine += jsonify( page.titleLength ) + output_separator;
@@ -90,10 +98,7 @@ process.on('exit', function (){
 // ==========================
 
 
-spider({
-	maxConnections: 12,
-	cache: cache
-})
+spider(g_spiderOpts)
 .route( g_domain, g_scope, function (window, $) {
 	
 	if (this.fromCache || (intTotalPages >= g_maxPages)) return;
@@ -101,10 +106,13 @@ spider({
 	$(container_selector + ' a').filter(function(i){
 		var self = $(this),
 			href = self.attr('href');
-		return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.search(/referrer/gi) == -1);
+		
+        //console.log( href );
+        return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !(g_urlFilterRegEx && g_urlFilterRegEx.test(href));
+        //return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.search(/referrer/gi) == -1);
 		//return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.indexOf("getdoc.aspx") == -1);
 		//return !!href && (href.indexOf('http') == 0);
-	}).spider();
+	}).spider(g_spiderOpts);
 	
 	intTotalPages++;
 	var output = [],
@@ -137,5 +145,5 @@ spider({
 	
 })
 .get( g_startPage )
-.log( 'log' )
+.log( 'debug' )
 ;
