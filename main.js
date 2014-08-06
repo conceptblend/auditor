@@ -21,13 +21,13 @@ function myMemoryCache () {
 }
 myMemoryCache.prototype.get = function (_url, cb) {
   var url = _url.toLowerCase();
-    console.log ('cache:get - '+url);
+    //console.log ('cache:get - '+url);
   if (!this.cache[url]) return cb(null);
   cb({headers:this.cache[url].headers, body:this.cache[url].body.toString()});
 }
 myMemoryCache.prototype.set = function (_url, headers, body) {
   var url = _url.toLowerCase();
-    console.log ('cache:set - '+url);
+    //console.log ('cache:set - '+url);
   this.cache[url] = {headers:headers, body:new Buffer(body)};
 }
 myMemoryCache.prototype.getHeaders = function (_url, cb) {
@@ -108,7 +108,7 @@ spider(g_spiderOpts)
 			href = self.attr('href');
 		
         //console.log( href );
-        return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !(g_urlFilterRegEx && g_urlFilterRegEx.test(href));
+        return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !(g_urlFilterRegEx !== null ? href.search(g_urlFilterRegEx) !== -1 : false);
         //return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.search(/referrer/gi) == -1);
 		//return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.indexOf("getdoc.aspx") == -1);
 		//return !!href && (href.indexOf('http') == 0);
@@ -145,5 +145,5 @@ spider(g_spiderOpts)
 	
 })
 .get( g_startPage )
-.log( 'debug' )
+.log( 'log' )
 ;
