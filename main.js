@@ -8,7 +8,8 @@ var output_separator	= "\t",
 	pages				= [],
 	intTotalPages		= 0,
 	g_maxPages			= process.argv[6] || 1000,
-    g_urlFilterRegEx    = process.argv[7] ? new RegExp(process.argv[7], "gi") : null;
+    g_urlFilterRegEx    = process.argv[7] ? new RegExp(process.argv[7], "gi") : null,
+    usedAltText         = false; // used to identify if any H1s used image content with Alt Text
 
 //console.log( process.argv );
 
@@ -47,8 +48,6 @@ var g_spiderOpts = {
 //	/MemoryCache object
 // ==========================
 
-console.log("Excludes non-html files.")
-
 // ==========================
 //	Output the results
 // ==========================
@@ -60,12 +59,23 @@ function jsonify (val) {
 function trimSpaces (str) {
 	return str.replace(/^ /gi, '').replace(/ $/gi, '');
 }
-
+function trimWhiteSpace (str) {
+	return str.replace(/^[\t\n ]/gi, '').replace(/[\t\n ]$/gi, '');
+}
+function reduceToSpaces (str) {
+    return trimWhiteSpace(str.replace(/[\r\n\t]/gi, ' ').replace(/[ ]+/,' '));
+}
 function wordCount (str) {
 	return (str !== "") ? trimSpaces(str).split(' ').length : 0;
 }
 
 process.on('exit', function (){
+    
+    var strNotes = "Excludes non-html files.";
+    if ( usedAltText ) {
+        strNotes += " Some H1s used images as their content."
+    }
+    console.log( strNotes )
 	
 	console.log("Total pages: "+intTotalPages);
 
@@ -106,25 +116,31 @@ spider(g_spiderOpts)
 	$(container_selector + ' a').filter(function(i){
 		var self = $(this),
 			href = self.attr('href');
-		
-        //console.log( href );
+
         return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !(g_urlFilterRegEx !== null ? href.search(g_urlFilterRegEx) !== -1 : false);
-        //return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.search(/referrer/gi) == -1);
-		//return !!href && (href.length > 0) && !!(href.search(/^mailto|javascript|tel/gi) == -1) && !!(href.indexOf("getdoc.aspx") == -1);
-		//return !!href && (href.indexOf('http') == 0);
 	}).spider(g_spiderOpts);
 	
 	intTotalPages++;
 	var output = [],
 		el_pageTitle = $('head > title'),
-		el_description = $('head > meta[name=description]'),
-		el_keywords = $('head > meta[name=keywords]'),
+		el_description = $('head > meta[name=description],head > meta[name=Description],'),
+		el_keywords = $('head > meta[name=keywords],head > meta[name=Keywords]'),
 		h1 = $('h1');
 
-	var pageTitle_text = !!(el_pageTitle.length > 0) ? $(el_pageTitle).eq(0).text() : "",
-		description_content = !!(el_description.length > 0) ? $(el_description).eq(0).attr('content') : "",
-		keywords_content = !!(el_keywords.length > 0) ? $(el_keywords).eq(0).attr('content') : "",
-		h1_text = !!(h1.length > 0) ? h1.eq(0).text() : "";
+	var pageTitle_text = !!(el_pageTitle.length > 0) ? reduceToSpaces($(el_pageTitle).eq(0).text()) : "",
+		description_content = !!(el_description.length > 0) ? reduceToSpaces($(el_description).eq(0).attr('content')) : "",
+		keywords_content = !!(el_keywords.length > 0) ? reduceToSpaces($(el_keywords).eq(0).attr('content')) : "",
+		h1_text = !!(h1.length > 0) ? reduceToSpaces(h1.eq(0).text()) : "";
+    
+        // A specific test for sites like apple.com that use images for H1s
+        if (trimWhiteSpace(h1_text).length == 0) {
+            var alt_text = "";
+            h1.children('img').each(function(i){
+                alt_text += $(this).prop("alt");
+                usedAltText = true;
+            });
+            h1_text = alt_text;
+        }
 	
 	var page = {
 		url						: this.url.href,
@@ -140,7 +156,15 @@ spider(g_spiderOpts)
 		h1WordLength			: wordCount(h1_text),
 		h1Length				: h1_text.length
 	};
-	
+    
+    /*
+    var strOut = "";
+    for (var p in page) {
+        strOut += page[p] + ","   
+    }
+    console.log( strOut );
+	*/
+    
 	pages.push( page );
 	
 })
