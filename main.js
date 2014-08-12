@@ -63,7 +63,7 @@ function trimWhiteSpace (str) {
 	return str.replace(/^[\t\n ]/gi, '').replace(/[\t\n ]$/gi, '');
 }
 function reduceToSpaces (str) {
-    return trimWhiteSpace(str.replace(/[\r\n\t]/gi, ' ').replace(/[ ]+/,' '));
+    return trimWhiteSpace(str.replace(/[\r\n\t]/gi, ' ').replace(/[ ]+/gi,' '));
 }
 function wordCount (str) {
 	return (str !== "") ? trimSpaces(str).split(' ').length : 0;
