@@ -1,6 +1,6 @@
 {
   "name": "auditor",
-  "version": "0.0.1",
+  "version": "0.3.1",
   "description": "A spider that audits site pages and semantic headings and metadata.",
   "main": "main.js",
   "repository": {
@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/conceptblend/auditor",
   "dependencies": {
-    "spider": "mikeal/spider"
+    "spider": "conceptblend/spider"
   }
 }
